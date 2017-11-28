@@ -1,21 +1,7 @@
 <?php
 
 Class smush {
-
-	// original, redirects to somewhere else..
-	// const url = 'http://smush.it/ws.php';
-
-	// official but does not work
-	// const url = 'http://developer.yahoo.com/yslow/smushit/ws.php';
-
-	// used at the new page but does not hande uploads
-	// const url = 'http://smushit.com/ysmush.it/ws.php';
-
-	// used at the new page but does not hande uploads
-	// const url = 'http://smushit.eperf.vip.ac4.yahoo.com/ysmush.it/ws.php';
-
-	// working
-	const url = 'http://ws1.adq.ac4.yahoo.com/ysmush.it/ws.php';
+	const url = 'http://api.resmush.it/ws.php';
 
 	// regexp for check extension
 	private static $regexp;
@@ -82,9 +68,13 @@ Class smush {
 			throw new Exception('Invalid file path: ' . $path);
 		// check it is a valid field
 		elseif (preg_match($regexp, $path)) {
-			curl_setopt($curl, CURLOPT_POSTFIELDS, array(
-				'files' => '@' . $path
-			));
+			$postParams = array(
+				'files' => curl_file_create($path),
+				'extra_info' => '123456'
+			);
+			var_dump($postParams);
+			
+			curl_setopt($curl, CURLOPT_POSTFIELDS, $postParams);
 
 			if (!$quiet)
 				echo "  smushing " . $path . "\n";
@@ -101,11 +91,13 @@ Class smush {
 			else {
 				// decode the json response
 				$data = json_decode($response);
-
+				
 				// if there is some error
 				if (!empty($data->error)) {
-					if (!$quiet)
+					if (!$quiet) {
 						echo "  error: " . strtolower($data->error) . "\n";
+						var_dump($data);
+					}
 				}
 				// if optimized size is larget than the original
 				elseif ($data->src_size < $data->dest_size) {
@@ -115,7 +107,9 @@ Class smush {
 				// if optimized size is smaller than 20 bytes (prevent empty images)
 				elseif ($data->dest_size < 20) {
 					if (!$quiet)
-						echo "  error: empty file downloaded";
+						{
+							echo "  error: empty file downloaded";
+						}
 				}
 				// if size are equal
 				elseif ($data->src_size == $data->dest_size) {
